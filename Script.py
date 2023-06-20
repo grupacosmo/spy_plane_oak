@@ -35,7 +35,7 @@ objectTracker = pipeline.create(dai.node.ObjectTracker)
 trackerOut = pipeline.create(dai.node.XLinkOut)
 trackerOut.setStreamName("tracklets")
 
-objectTracker.setDetectionLabelsToTrack([15])  # track labels numbers
+objectTracker.setDetectionLabelsToTrack([7, 15])  # track labels numbers
         # possible tracking types: ZERO_TERM_COLOR_HISTOGRAM, ZERO_TERM_IMAGELESS, SHORT_TERM_IMAGELESS, SHORT_TERM_KCF
 objectTracker.setTrackerType(dai.TrackerType.SHORT_TERM_KCF)
         # take the smallest ID when new object is tracked, possible options: SMALLEST_ID, UNIQUE_ID
@@ -63,7 +63,7 @@ camRgb.setPreviewSize(300, 300)
 camRgb.setInterleaved(False)
 camRgb.setFps(40)
 # Define a neural network that will make predictions based on the source frames
-nn.setConfidenceThreshold(0.5)
+nn.setConfidenceThreshold(0.8)
 nn.setBlobPath(args.nnPath)
 nn.setNumInferenceThreads(2)
 nn.input.setBlocking(False)
@@ -108,7 +108,6 @@ with dai.Device(pipeline) as device:
     counter = 0
     color2 = (255, 255, 255)
 
-    # nn data (bounding box locations) are in <0..1> range - they need to be normalized with frame width/height
     def frameNorm(frame, bbox):
         normVals = np.full(len(bbox), frame.shape[0])
         normVals[::2] = frame.shape[1]
@@ -117,7 +116,7 @@ with dai.Device(pipeline) as device:
     def displayFrame(name, frame):
         color = (255, 0, 0)
         for detection in detections:
-            if labelMap[detection.label] == "person":
+            if labelMap[detection.label] == "person" or labelMap[detection.label] == "car":
                 bbox = frameNorm(frame, (detection.xmin, detection.ymin, detection.xmax, detection.ymax))
                 cv2.putText(frame, labelMap[detection.label], (bbox[0] + 10, bbox[1] + 20), cv2.FONT_HERSHEY_TRIPLEX, 0.5, color)
                 cv2.putText(frame, f"{int(detection.confidence * 100)}%", (bbox[0] + 10, bbox[1] + 40), cv2.FONT_HERSHEY_TRIPLEX, 0.5, color)
@@ -128,24 +127,16 @@ with dai.Device(pipeline) as device:
     printOutputLayersOnce = True
     person = 0
     lost = 1
+    id = 0
     while True:
         track = None
-        if args.sync:
-            # Use blocking get() call to catch frame and inference result synced
-            inRgb = qRgb.get()
-            inDet = qDet.get()
-            inNN = qNN.get()
-            track = tracklets.tryGet()
-        else:
-            # Instead of get (blocking), we use tryGet (non-blocking) which will return the available data or None otherwise
-            inRgb = qRgb.tryGet()
-            inDet = qDet.tryGet()
-            inNN = qNN.tryGet()
-            track = tracklets.tryGet()
-
+        inRgb = qRgb.get()
+        inDet = qDet.get()
+        inNN = qNN.get()
+        track = tracklets.tryGet()
         if track is not None:
             for t in track.tracklets:
-                #lost = 1
+                id_set = 0
                 roi = t.roi.denormalize(frame.shape[1], frame.shape[0])
                 x1 = int(roi.topLeft().x)
                 y1 = int(roi.topLeft().y)
@@ -154,26 +145,35 @@ with dai.Device(pipeline) as device:
                 status = int(t.status)
                 color = (0, 255, 255)
                 if status == 1:
+                    appearance = appearance + 1
                     color = (255, 0, 0)
+                    if appearance == 5:
+                        id = id+1
+                        if not id_set:
+                            id_const = id
+                            id_set = 1
+                        output.append(f"Object {labelMap[t.label]} number {t.id} detected at {datetime.now()}")
+                        output_file.write_text(json.dumps(output, indent=4))
                 elif status == 0:
                     lost = 0
                     person = person + 1
-                    output.append(f"Object person number {t.id} detected at {datetime.now()}")
-                    output_file.write_text(json.dumps(output, indent=4))
+                    appearance = 0
                 elif status == 2:
                     color = (0, 0, 255)
                 elif status == 3:
-                    output.append(f"Object person number {t.id} lost at {datetime.now()}")
-                    output_file.write_text(json.dumps(output, indent=4))
-                    color = (255, 255, 0)
+                    if appearance >= 5:
+                        output.append(f"Object {labelMap[t.label]} number {t.id} lost at {datetime.now()}")
+                        output_file.write_text(json.dumps(output, indent=4))
 
+                    color = (255, 255, 0)
         if inRgb is not None:
             frame = inRgb.getCvFrame()
             cv2.putText(frame, "NN fps: {:.2f}".format(counter / (time.monotonic() - startTime)),
                         (2, frame.shape[0] - 4), cv2.FONT_HERSHEY_TRIPLEX, 0.4, color2)
 
         if inDet is not None:
-            if inDet.detections and inDet.detections != detections and labelMap[inDet.detections[0].label] == "person":
+            if inDet.detections and inDet.detections != detections and \
+                    (labelMap[inDet.detections[0].label] == "person" or labelMap[inDet.detections[0].label] == "car"):
                 detections = inDet.detections
             counter += 1
 
@@ -185,6 +185,8 @@ with dai.Device(pipeline) as device:
             printOutputLayersOnce = False;
 
         if frame is not None:
+            if track and track.tracklets == []:
+                detections = []
             displayFrame("rgb", frame)
 
         if cv2.waitKey(1) == ord('q'):
