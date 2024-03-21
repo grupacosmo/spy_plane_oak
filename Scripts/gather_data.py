@@ -3,9 +3,26 @@ import pickle
 import numpy as np
 from PIL import Image
 
+
+#TODO
+# Klasa z metodami do:
+# - Ładowania danych z pickle
+# - Tworzenia pickle z dostępnych zdjeć
+# -
+
+
+class Data():
+    def __init__(self):
+        pass
+
+
+
+
+
 # data paths
-train_path = 'data/train'
-validation_path = 'data/validation'
+train_path = '../data/train'
+validation_path = '../data/validation'
+
 
 
 # prepare labels for data
@@ -25,14 +42,14 @@ def prepare_data(path):
 
 # save prepared labels in pickle
 def save_data(data, file):
-    file = 'data/' + file
+    file = '../data/' + file + '.pkl'
     with open(file, 'wb') as f:
         pickle.dump(data, f)
 
 
 # load prepared data from pickle
 def load_data(file):
-    file = 'data/' + file + '.pkl'
+    file = '../data/' + file + '.pkl'
     with open(file, 'rb') as f:
         return pickle.load(f)
 
@@ -42,3 +59,4 @@ save_data(train_data, 'train_data')
 
 validation_data = prepare_data(validation_path)
 save_data(validation_data, 'validation_data')
+
