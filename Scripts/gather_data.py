@@ -8,8 +8,9 @@ from PIL import Image
 # Klasa z metodami do:
 # - Ładowania danych z pickle
 # - Tworzenia pickle z dostępnych zdjeć
-# -
-
+# - Niech przy tworzeniu obiektu od razu tworzył 3 zmienne z danymi do trenowania, walidacji i testowania
+# (więc  trzeba dodać 3 plik), najlepiej wrzuć wszystkie dane do 1 pliku i potem to podziel na 3
+# a w klasie zrób może liste list data[train[...], validation[...], test[...]]
 
 class Data():
     def __init__(self):
