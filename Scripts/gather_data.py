@@ -14,50 +14,48 @@ from PIL import Image
 
 class Data():
     def __init__(self):
-        pass
+        self.paths = {
+            'train': '../data/train',
+            'validation': '../data/validation',
+            #'test': '../data'
+        }
+        self.data = {'train': [], 'validation': []} # 'test': []
+        self.prepare_and_load_data()
+
+    def prepare_and_load_data(self):
+        for set_name in self.paths:
+            if self.paths[set_name]:
+                self.data[set_name] = self.prepare_data(self.paths[set_name])
+                self.save_data(self.data[set_name], set_name)
+                self.data[set_name] = self.load_data(set_name)
+
+    def prepare_data(self, path):
+        data = {'images': [], 'labels': []}
+        categories = {'cars': 1, 'non_cars': 0}
+        for category, label in categories.items():
+            categories_path = os.path.join(path, category)
+            for file in os.listdir(categories_path):
+                full_path = os.path.join(categories_path, file)
+                image = Image.open(full_path)
+                image = np.array(image)
+                data['images'].append(image)
+                data['labels'].append(label)
+        return data
+
+    def save_data(self, data, file_name):
+        file_path = f'../data/{file_name}.pkl'
+        with open(file_path, 'wb') as file:
+            pickle.dump(data, file)
+
+    def load_data(self, filename):
+        file_path = f'../data/{filename}.pkl'
+        with open(file_path, 'rb') as file:
+            return pickle.load(file)
 
 
-
-
-
-# data paths
 train_path = '../data/train'
 validation_path = '../data/validation'
+#test_path = '../data/test'
 
 
-
-# prepare labels for data
-def prepare_data(path):
-    data = {'images': [], 'labels': []}
-    categories = {'cars': 1, 'non_cars': 0}
-    for category, label in categories.items():
-        categories_path = os.path.join(path, category)
-        for file in os.listdir(categories_path):
-            full_path = os.path.join(categories_path, file)
-            image = Image.open(full_path)
-            image = np.array(image)
-            data['images'].append(image)
-            data['labels'].append(label)
-    return data
-
-
-# save prepared labels in pickle
-def save_data(data, file):
-    file = '../data/' + file + '.pkl'
-    with open(file, 'wb') as f:
-        pickle.dump(data, f)
-
-
-# load prepared data from pickle
-def load_data(file):
-    file = '../data/' + file + '.pkl'
-    with open(file, 'rb') as f:
-        return pickle.load(f)
-
-
-train_data = prepare_data(train_path)
-save_data(train_data, 'train_data')
-
-validation_data = prepare_data(validation_path)
-save_data(validation_data, 'validation_data')
-
+dataset = Data(train_path, validation_path) #test_path
