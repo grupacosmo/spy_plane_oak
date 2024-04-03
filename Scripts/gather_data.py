@@ -1,13 +1,11 @@
 import os
 import pickle
 import numpy as np
-from PIL import Image
+import cv2
 
 
 #TODO
 # Klasa z metodami do:
-# - Ładowania danych z pickle
-# - Tworzenia pickle z dostępnych zdjeć
 # - Niech przy tworzeniu obiektu od razu tworzył 3 zmienne z danymi do trenowania, walidacji i testowania
 # (więc  trzeba dodać 3 plik), najlepiej wrzuć wszystkie dane do 1 pliku i potem to podziel na 3
 # a w klasie zrób może liste list data[train[...], validation[...], test[...]]
@@ -15,12 +13,13 @@ from PIL import Image
 class Data():
     def __init__(self):
         self.paths = {
-            'train': '../data/train',
-            'validation': '../data/validation',
+            'train': './data/train',
+            'validation': './data/validation',
             #'test': '../data'
         }
         self.data = {'train': [], 'validation': []} # 'test': []
-        self.prepare_and_load_data()
+        if not os.listdir('./data/pickle'):
+            self.prepare_and_load_data()
 
     def prepare_and_load_data(self):
         for set_name in self.paths:
@@ -33,29 +32,29 @@ class Data():
         data = {'images': [], 'labels': []}
         categories = {'cars': 1, 'non_cars': 0}
         for category, label in categories.items():
-            categories_path = os.path.join(path, category)
+            categories_path = os.path.join(path, category).replace("\\","/")
             for file in os.listdir(categories_path):
-                full_path = os.path.join(categories_path, file)
-                image = Image.open(full_path)
+                full_path = os.path.join(categories_path, file).replace("\\","/")
+                image = cv2.imread(full_path)
                 image = np.array(image)
                 data['images'].append(image)
                 data['labels'].append(label)
         return data
 
     def save_data(self, data, file_name):
-        file_path = f'../data/{file_name}.pkl'
+        file_path = f'./data/pickle/{file_name}.pkl'
         with open(file_path, 'wb') as file:
             pickle.dump(data, file)
 
     def load_data(self, filename):
-        file_path = f'../data/{filename}.pkl'
+        file_path = f'./data/pickle/{filename}.pkl'
         with open(file_path, 'rb') as file:
             return pickle.load(file)
 
 
-train_path = '../data/train'
-validation_path = '../data/validation'
-#test_path = '../data/test'
-
-
-dataset = Data(train_path, validation_path) #test_path
+# train_path = '../data/train'
+# validation_path = '../data/validation'
+# #test_path = '../data/test'
+#
+#
+# dataset = Data(train_path, validation_path) #test_path
