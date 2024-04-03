@@ -3,6 +3,8 @@ from keras.models import Sequential
 from keras.layers import Dense, Conv2D, MaxPool2D, Flatten
 
 
+#TODO
+# 1. Make some hyperparameters tuning
 class Model:
     def __init__(self, prepared_data:Preprocessing):
         self.prepared_data = prepared_data
@@ -20,7 +22,6 @@ class Model:
         self.model.add(Dense(10, activation='softmax'))
         self.model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer='rmsprop')
 
-    # TODO: wrzucić obrobione dane
     def fit_model(self):
         self.model.fit()
 

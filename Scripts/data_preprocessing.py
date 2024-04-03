@@ -25,8 +25,9 @@ class Preprocessing:
 
     def resize(self):
         for img_set in self.data.data:
-            for img in img_set:
-                image = cv2.resize(img, self.size)
+            for index, img in enumerate(self.data.data[img_set]['images']):
+                self.data.data[img_set]['images'][index] = cv2.resize(img, self.size)
+                ...
 
     @property
     def size(self):

@@ -1,14 +1,15 @@
 import os
 import pickle
 import numpy as np
+from PIL import Image
 import cv2
 
 
 #TODO
-# Klasa z metodami do:
-# - Niech przy tworzeniu obiektu od razu tworzył 3 zmienne z danymi do trenowania, walidacji i testowania
+# 1. Niech przy tworzeniu obiektu od razu tworzył 3 zmienne z danymi do trenowania, walidacji i testowania
 # (więc  trzeba dodać 3 plik), najlepiej wrzuć wszystkie dane do 1 pliku i potem to podziel na 3
 # a w klasie zrób może liste list data[train[...], validation[...], test[...]]
+#
 
 class Data():
     def __init__(self):
@@ -18,14 +19,17 @@ class Data():
             #'test': '../data'
         }
         self.data = {'train': [], 'validation': []} # 'test': []
-        if not os.listdir('./data/pickle'):
-            self.prepare_and_load_data()
+        self.prepare_and_load_data()
 
     def prepare_and_load_data(self):
-        for set_name in self.paths:
-            if self.paths[set_name]:
-                self.data[set_name] = self.prepare_data(self.paths[set_name])
-                self.save_data(self.data[set_name], set_name)
+        if not os.listdir('./data/pickle'):
+            for set_name in self.paths:
+                if self.paths[set_name]:
+                    self.data[set_name] = self.prepare_data(self.paths[set_name])
+                    self.save_data(self.data[set_name], set_name)
+                    self.data[set_name] = self.load_data(set_name)
+        else:
+            for set_name in self.paths:
                 self.data[set_name] = self.load_data(set_name)
 
     def prepare_data(self, path):
@@ -50,11 +54,3 @@ class Data():
         file_path = f'./data/pickle/{filename}.pkl'
         with open(file_path, 'rb') as file:
             return pickle.load(file)
-
-
-# train_path = '../data/train'
-# validation_path = '../data/validation'
-# #test_path = '../data/test'
-#
-#
-# dataset = Data(train_path, validation_path) #test_path
