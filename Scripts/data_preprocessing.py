@@ -23,11 +23,21 @@ class Preprocessing:
             pic = random.randrange(0, 14)
         image_aug = self.augmentation('''image=pic''') #TODO: wsadzić tu obrazy i zobaczymy czy działa xd
 
+    def normalize(self):
+        for img_set in self.data.data:
+            self.data.data[img_set]['images'] = self.data.data[img_set]['images']/255
     def resize(self):
         for img_set in self.data.data:
+            a, b, c, d = (self.data.data[img_set]['images'].shape)
+            shap = (a,) + self.size + (3,)
+            resized_imgs = np.ndarray(shape=shap)
             for index, img in enumerate(self.data.data[img_set]['images']):
-                self.data.data[img_set]['images'][index] = cv2.resize(img, self.size)
-                ...
+                img = cv2.resize(img, dsize=self.size, interpolation=cv2.INTER_CUBIC)
+                resized_imgs[index] = img
+            self.data.data[img_set]['images'] = resized_imgs
+            # a, b, c, d = (self.data.data[img_set]['images'].shape)
+            # shap = (a,) + self.size
+            # self.data.data[img_set]['images'] = cv2.resize(self.data.data[img_set]['images'], self.size)
 
     @property
     def size(self):

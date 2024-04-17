@@ -6,18 +6,12 @@ from sklearn.model_selection import train_test_split
 import shutil
 
 
-#TODO
-# 1. Niech przy tworzeniu obiektu od razu tworzył 3 zmienne z danymi do trenowania, walidacji i testowania
-# (więc  trzeba dodać 3 plik), najlepiej wrzuć wszystkie dane do 1 pliku i potem to podziel na 3
-# a w klasie zrób może liste list data[train[...], validation[...], test[...]]
-#
-
 class Data():
     def __init__(self):
         self.paths = {
-            'train': '../data/train',
-            'validation': '../data/validation',
-            'test': '../data/test'
+            'train': 'data/train',
+            'validation': 'data/validation',
+            'test': 'data/test'
         }
         self.data = {'train': [], 'validation': [], 'test': []}
         self.prepare_and_load_data()
@@ -58,7 +52,7 @@ class Data():
         return data
 
     def prepare_dataset(self):
-        base_path = '../data/dataset'
+        base_path = 'data/dataset'
         categories = {'cars': 1, 'non_cars': 0}
         file_paths = {'images': [], 'labels': []}
         data = {'images': [], 'labels': []}
@@ -68,7 +62,7 @@ class Data():
             for file in os.listdir(category_path):
                 file_path = os.path.join(category_path, file).replace("\\", "/")
                 image = cv2.imread(file_path)
-                image = cv2.resize(image, (32, 32))
+                image = cv2.resize(image, (100, 100))
                 image = np.array(image)
                 data['images'].append(image)
                 data['labels'].append(label)
@@ -79,9 +73,9 @@ class Data():
         labels = np.array(data['labels'])
 
         train_images, temp_images, train_labels, temp_labels, train_indices, temp_indices = train_test_split(
-            images, labels, range(len(labels)), test_size=0.4, stratify=labels, random_state=42)
+            images, labels, range(len(labels)), test_size=0.2, stratify=labels, random_state=42, shuffle=True)
         test_images, val_images, test_labels, val_labels, test_indices, val_indices = train_test_split(
-            temp_images, temp_labels, temp_indices, test_size=0.5, stratify=temp_labels, random_state=42)
+            temp_images, temp_labels, temp_indices, test_size=0.5, stratify=temp_labels, random_state=42, shuffle=True)
 
         self.indices = {
             'train': train_indices,
@@ -109,12 +103,12 @@ class Data():
                 shutil.copy(src_file_path, dest_folder)
 
     def save_data(self, data, file_name):
-        file_path = f'../data/pickle/{file_name}.pkl'
+        file_path = f'data/pickle/{file_name}.pkl'
         with open(file_path, 'wb') as file:
             pickle.dump(data, file)
 
     def load_data(self, filename):
-        file_path = f'../data/pickle/{filename}.pkl'
+        file_path = f'data/pickle/{filename}.pkl'
         with open(file_path, 'rb') as file:
             return pickle.load(file)
 
