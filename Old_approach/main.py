@@ -6,7 +6,6 @@ from Old_approach.Scripts import Model
 import cv2
 from patchify import patchify
 
-# TODO
 #  1. Pack all into one class to reduce complexity
 #  2. Test model
 if __name__ == "__main__":
